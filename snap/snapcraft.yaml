@@ -1,0 +1,88 @@
+name: mqtest-app
+base: core20
+version: '20'
+summary: POSIX Message Queue test - client component
+description: |
+  This snap connects to other snaps' POSIX message queues slots, in order to
+  test their functionality between strictly confined snaps.
+
+  Intended to work with the itrue-mqtest-provider snap.
+
+grade: stable
+confinement: strict
+
+parts:
+  meson-deps:
+    plugin: nil
+    build-packages:
+      - meson
+      - ninja-build
+
+  provider:
+    after: [meson-deps]
+    plugin: meson
+    source: provider
+
+  client:
+    after: [meson-deps]
+    plugin: meson
+    source: client
+
+slots:
+  mqtest-rw:
+    interface: posix-mq
+    path: [/test-rw,]
+    permissions:
+      - read
+      - write
+
+  mqtest-default:
+    interface: posix-mq
+    path: [/test-default,]
+
+  mqtest-ro:
+    interface: posix-mq
+    path: [/test-ro,]
+    permissions:
+      - read
+
+  mqtest-all-perms:
+    interface: posix-mq
+    path: [/test-all-perms,]
+    permissions:
+      - read
+      - write
+      - create
+      - delete
+
+plugs:
+  mqtest-rw-plug:
+    interface: posix-mq
+  mqtest-default-plug:
+    interface: posix-mq
+  mqtest-ro-plug:
+    interface: posix-mq
+  mqtest-all-perms-plug:
+    interface: posix-mq
+
+
+apps:
+  mqtest-provider:
+    command: usr/local/bin/provider
+    slots:
+      - mqtest-default
+      - mqtest-rw
+      - mqtest-ro
+      - mqtest-all-perms
+  default:
+    command: usr/local/bin/client default
+    plugs: [mqtest-default-plug]
+  rw:
+    command: usr/local/bin/client rw
+    plugs: [mqtest-rw-plug]
+  all:
+    command: usr/local/bin/client all
+    plugs: [mqtest-all-perms-plug]
+  ro:
+    command: usr/local/bin/client ro
+    plugs: [mqtest-ro-plug]
